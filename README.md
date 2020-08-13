@@ -1,3 +1,5 @@
+![filesystem-webhook](https://raw.githubusercontent.com/bst27/fs-webhook/master/website/banner.png)
+
 # About
 This app sends webhooks for filesystem changes. You can define an URL to receive webhooks and a filesystem path
 to be monitored for changes.
