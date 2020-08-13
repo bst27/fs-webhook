@@ -3,12 +3,23 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"github.com/fsnotify/fsnotify"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
+	url := flag.String("url", "", "URL to receive http post requests (webhook target)")
+	path := flag.String("path", "", "Filesystem path to be monitored for changes (file or folder)")
+	flag.Parse()
+
+	if *url == "" || *path == "" {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
@@ -24,7 +35,7 @@ func main() {
 					return
 				}
 
-				go sendWebhook(event.Name, event.Op.String())
+				go sendWebhook(*url, event.Name, event.Op.String())
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					return
@@ -35,14 +46,14 @@ func main() {
 		}
 	}()
 
-	err = watcher.Add("/tmp/foo")
+	err = watcher.Add(*path)
 	if err != nil {
 		log.Fatal(err)
 	}
 	<-done
 }
 
-func sendWebhook(path string, action string) error {
+func sendWebhook(url string, path string, action string) error {
 	body := make(map[string]string)
 	body["path"] = path
 	body["action"] = action
@@ -52,6 +63,10 @@ func sendWebhook(path string, action string) error {
 		return err
 	}
 
-	_, err = http.Post("https://webhook.site/5405b754-19a0-4048-8d2e-d5f1de72b037", "application/json", bytes.NewReader(jsonBody))
+	_, err = http.Post(url, "application/json", bytes.NewReader(jsonBody))
+	if err != nil {
+		log.Println(err)
+	}
+
 	return err
 }
