@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -35,7 +36,7 @@ func main() {
 					return
 				}
 
-				go sendWebhook(*url, event.Name, event.Op.String())
+				go sendWebhook(*url, event.Name, strings.ToLower(event.Op.String()))
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					return
